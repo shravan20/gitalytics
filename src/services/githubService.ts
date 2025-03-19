@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { cacheService } from "./cacheService";
 
 // Types
 export interface Repository {
@@ -132,16 +133,38 @@ const handleApiError = (error: any, message: string) => {
   return null;
 };
 
+// Helper function to fetch with cache
+const fetchWithCache = async (url: string, options: RequestInit, cacheKey: string) => {
+  // Try to get from cache first
+  const cachedData = await cacheService.get(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
+  // If not in cache, fetch from API
+  const response = await fetch(url, options);
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  
+  // Cache the response
+  await cacheService.set(cacheKey, data);
+  
+  return data;
+};
+
 // Fetch repository info
 export const fetchRepository = async (repoFullName: string): Promise<Repository | null> => {
   try {
-    const response = await fetch(`${GITHUB_API_BASE_URL}/repos/${repoFullName}`, getFetchOptions());
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    
-    return await response.json();
+    const cacheKey = `repo:${repoFullName}`;
+    return await fetchWithCache(
+      `${GITHUB_API_BASE_URL}/repos/${repoFullName}`,
+      getFetchOptions(),
+      cacheKey
+    );
   } catch (error) {
     return handleApiError(error, "Failed to fetch repository data");
   }
@@ -150,16 +173,12 @@ export const fetchRepository = async (repoFullName: string): Promise<Repository 
 // Fetch contributors
 export const fetchContributors = async (repoFullName: string, limit = 10): Promise<Contributor[] | null> => {
   try {
-    const response = await fetch(
+    const cacheKey = `contributors:${repoFullName}:${limit}`;
+    return await fetchWithCache(
       `${GITHUB_API_BASE_URL}/repos/${repoFullName}/contributors?per_page=${limit}`,
-      getFetchOptions()
+      getFetchOptions(),
+      cacheKey
     );
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    
-    return await response.json();
   } catch (error) {
     return handleApiError(error, "Failed to fetch contributors");
   }
@@ -168,16 +187,12 @@ export const fetchContributors = async (repoFullName: string, limit = 10): Promi
 // Fetch issues
 export const fetchIssues = async (repoFullName: string, state = "all", limit = 100): Promise<Issue[] | null> => {
   try {
-    const response = await fetch(
+    const cacheKey = `issues:${repoFullName}:${state}:${limit}`;
+    return await fetchWithCache(
       `${GITHUB_API_BASE_URL}/repos/${repoFullName}/issues?state=${state}&per_page=${limit}`,
-      getFetchOptions()
+      getFetchOptions(),
+      cacheKey
     );
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    
-    return await response.json();
   } catch (error) {
     return handleApiError(error, "Failed to fetch issues");
   }
@@ -186,16 +201,12 @@ export const fetchIssues = async (repoFullName: string, state = "all", limit = 1
 // Fetch pull requests
 export const fetchPullRequests = async (repoFullName: string, state = "all", limit = 100): Promise<PullRequest[] | null> => {
   try {
-    const response = await fetch(
+    const cacheKey = `pulls:${repoFullName}:${state}:${limit}`;
+    return await fetchWithCache(
       `${GITHUB_API_BASE_URL}/repos/${repoFullName}/pulls?state=${state}&per_page=${limit}`,
-      getFetchOptions()
+      getFetchOptions(),
+      cacheKey
     );
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    
-    return await response.json();
   } catch (error) {
     return handleApiError(error, "Failed to fetch pull requests");
   }
@@ -204,16 +215,12 @@ export const fetchPullRequests = async (repoFullName: string, state = "all", lim
 // Fetch commit activity
 export const fetchCommitActivity = async (repoFullName: string): Promise<CommitActivity[] | null> => {
   try {
-    const response = await fetch(
+    const cacheKey = `commit-activity:${repoFullName}`;
+    return await fetchWithCache(
       `${GITHUB_API_BASE_URL}/repos/${repoFullName}/stats/commit_activity`,
-      getFetchOptions()
+      getFetchOptions(),
+      cacheKey
     );
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    
-    return await response.json();
   } catch (error) {
     return handleApiError(error, "Failed to fetch commit activity");
   }
@@ -222,21 +229,12 @@ export const fetchCommitActivity = async (repoFullName: string): Promise<CommitA
 // Fetch code frequency
 export const fetchCodeFrequency = async (repoFullName: string): Promise<CodeFrequency[] | null> => {
   try {
-    const response = await fetch(
+    const cacheKey = `code-frequency:${repoFullName}`;
+    return await fetchWithCache(
       `${GITHUB_API_BASE_URL}/repos/${repoFullName}/stats/code_frequency`,
-      getFetchOptions()
+      getFetchOptions(),
+      cacheKey
     );
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    
-    const rawData = await response.json();
-    return rawData.map((item: number[]) => ({
-      week: item[0],
-      additions: item[1],
-      deletions: Math.abs(item[2]),
-    }));
   } catch (error) {
     return handleApiError(error, "Failed to fetch code frequency");
   }
@@ -245,16 +243,12 @@ export const fetchCodeFrequency = async (repoFullName: string): Promise<CodeFreq
 // Fetch releases
 export const fetchReleases = async (repoFullName: string, limit = 10): Promise<Release[] | null> => {
   try {
-    const response = await fetch(
+    const cacheKey = `releases:${repoFullName}:${limit}`;
+    return await fetchWithCache(
       `${GITHUB_API_BASE_URL}/repos/${repoFullName}/releases?per_page=${limit}`,
-      getFetchOptions()
+      getFetchOptions(),
+      cacheKey
     );
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    
-    return await response.json();
   } catch (error) {
     return handleApiError(error, "Failed to fetch releases");
   }
