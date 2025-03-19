@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Repository,
@@ -21,7 +21,7 @@ import {
   formatDuration,
   formatDate,
 } from "@/services/githubService";
-import { 
+import {
   DocCheckResult,
   checkDocumentationFiles,
 } from "@/services/docsService";
@@ -60,8 +60,9 @@ import {
 
 const Dashboard = () => {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [repoFullName, setRepoFullName] = useState<string | null>(null);
-  
+
   // Data states
   const [repository, setRepository] = useState<Repository | null>(null);
   const [contributors, setContributors] = useState<Contributor[] | null>(null);
@@ -71,78 +72,49 @@ const Dashboard = () => {
   const [codeFrequency, setCodeFrequency] = useState<CodeFrequency[] | null>(null);
   const [releases, setReleases] = useState<Release[] | null>(null);
   const [docResults, setDocResults] = useState<DocCheckResult[] | null>(null);
-  
+
   // Loading states
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Mock data toggle
   const [useMockData, setUseMockData] = useState(false);
-  
-  // Parse URL query parameter
+
+  // Parse URL query parameter and reset states when repo changes
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
     const repoParam = searchParams.get("repo");
-    
+
     if (repoParam) {
       setRepoFullName(repoParam);
-    }
-  }, [location.search]);
-  
-  // Load mock data when toggle is switched
-  useEffect(() => {
-    if (useMockData) {
-      const mockData = getMockData();
-      setRepository(mockData.repository);
-      setContributors(mockData.contributors);
-      setIssues(mockData.issues);
-      setPullRequests(mockData.pullRequests);
-      setCommitActivity(mockData.commitActivity);
-      setCodeFrequency(mockData.codeFrequency);
-      setReleases(mockData.releases);
-      setDocResults([
-        { file: { name: "README", description: "Project overview", importance: "critical", path: "README.md" }, exists: true, url: "https://github.com/facebook/react/blob/main/README.md" },
-        { file: { name: "License", description: "License terms", importance: "critical", path: "LICENSE" }, exists: true, url: "https://github.com/facebook/react/blob/main/LICENSE" },
-        { file: { name: "Contributing Guide", description: "Instructions for contributors", importance: "recommended", path: "CONTRIBUTING.md" }, exists: true, url: "https://github.com/facebook/react/blob/main/CONTRIBUTING.md" },
-        { file: { name: "Code of Conduct", description: "Expected behavior", importance: "recommended", path: "CODE_OF_CONDUCT.md" }, exists: true, url: "https://github.com/facebook/react/blob/main/CODE_OF_CONDUCT.md" },
-        { file: { name: "Issue Templates", description: "Templates for issues", importance: "recommended", path: ".github/ISSUE_TEMPLATE" }, exists: true, url: "https://github.com/facebook/react/blob/main/.github/ISSUE_TEMPLATE" },
-        { file: { name: "Pull Request Template", description: "Template for PRs", importance: "recommended", path: ".github/PULL_REQUEST_TEMPLATE.md" }, exists: true, url: "https://github.com/facebook/react/blob/main/.github/PULL_REQUEST_TEMPLATE.md" },
-        { file: { name: "Security Policy", description: "Security reporting", importance: "recommended", path: "SECURITY.md" }, exists: false },
-        { file: { name: "Changelog", description: "History of changes", importance: "optional", path: "CHANGELOG.md" }, exists: true, url: "https://github.com/facebook/react/blob/main/CHANGELOG.md" },
-        { file: { name: "Support", description: "How to get support", importance: "optional", path: "SUPPORT.md" }, exists: false },
-        { file: { name: "Governance", description: "Project governance", importance: "optional", path: "GOVERNANCE.md" }, exists: false }
-      ]);
-      setIsLoading(false);
-      
-      // Update URL to reflect we're using mock data for facebook/react
-      if (!repoFullName) {
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.set("repo", "facebook/react");
-        window.history.pushState({}, "", newUrl.toString());
-        setRepoFullName("facebook/react");
+
+      // Reset states when repo changes
+      if (!useMockData) {
+        setRepository(null);
+        setContributors(null);
+        setIssues(null);
+        setPullRequests(null);
+        setCommitActivity(null);
+        setCodeFrequency(null);
+        setReleases(null);
+        setDocResults(null);
       }
-      
-      toast.success("Loaded mock data for preview");
-    } else if (repoFullName) {
-      // If we switch back to real data, refetch
-      fetchData(repoFullName);
     }
-  }, [useMockData]);
-  
+  }, [searchParams, useMockData]);
+
   // Fetch data when repo changes
   useEffect(() => {
     if (!repoFullName || useMockData) return;
-    
+
     fetchData(repoFullName);
   }, [repoFullName]);
-  
+
   const fetchData = async (repo: string) => {
     setIsLoading(true);
-    
+
     // Fetch repository data
     const repoData = await fetchRepository(repo);
     if (repoData) {
       setRepository(repoData);
-      
+
       // Fetch additional data concurrently
       const [
         contributorsData,
@@ -161,7 +133,7 @@ const Dashboard = () => {
         fetchReleases(repo),
         checkDocumentationFiles(repo),
       ]);
-      
+
       setContributors(contributorsData);
       setIssues(issuesData);
       setPullRequests(pullRequestsData);
@@ -170,70 +142,78 @@ const Dashboard = () => {
       setReleases(releasesData);
       setDocResults(docResultsData);
     }
-    
+
     setIsLoading(false);
   };
-  
+
+  // Handle search from the search bar
+  const handleSearch = (repo: string) => {
+    if (repo !== repoFullName) {
+      setIsLoading(true);
+      // States will be reset by the useEffect above
+    }
+  };
+
   // Prepare chart data for commit activity
   const commitActivityChartData = commitActivity
     ? commitActivity.map((week) => ({
-        week: new Date(week.week * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        commits: week.total,
-      })).slice(-12)
+      week: new Date(week.week * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      commits: week.total,
+    })).slice(-12)
     : [];
-  
+
   // Prepare chart data for code frequency
   const codeFrequencyChartData = codeFrequency
     ? codeFrequency.map((week) => ({
-        week: new Date(week.week * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        additions: week.additions,
-        deletions: week.deletions,
-      })).slice(-12)
+      week: new Date(week.week * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      additions: week.additions,
+      deletions: week.deletions,
+    })).slice(-12)
     : [];
-  
+
   // Prepare chart data for issues
   const issuesChartData = issues
     ? [
-        { name: "Open", value: issues.filter((issue) => issue.state === "open").length },
-        { name: "Closed", value: issues.filter((issue) => issue.state === "closed").length },
-      ]
+      { name: "Open", value: issues.filter((issue) => issue.state === "open").length },
+      { name: "Closed", value: issues.filter((issue) => issue.state === "closed").length },
+    ]
     : [];
-  
+
   // Prepare chart data for pull requests
   const pullRequestsChartData = pullRequests
     ? [
-        { name: "Open", value: pullRequests.filter((pr) => pr.state === "open").length },
-        {
-          name: "Merged",
-          value: pullRequests.filter((pr) => pr.merged_at !== null).length,
-        },
-        {
-          name: "Closed (Unmerged)",
-          value: pullRequests.filter(
-            (pr) => pr.state === "closed" && pr.merged_at === null
-          ).length,
-        },
-      ]
+      { name: "Open", value: pullRequests.filter((pr) => pr.state === "open").length },
+      {
+        name: "Merged",
+        value: pullRequests.filter((pr) => pr.merged_at !== null).length,
+      },
+      {
+        name: "Closed (Unmerged)",
+        value: pullRequests.filter(
+          (pr) => pr.state === "closed" && pr.merged_at === null
+        ).length,
+      },
+    ]
     : [];
-  
+
   // Calculate metrics
   const issueResolutionTime = issues ? calculateIssueResolutionTime(issues) : null;
   const prMergeTime = pullRequests ? calculatePRMergeTime(pullRequests) : null;
-  
+
   // Helper function to get an issue/PR state color
   const getStateColor = (state: string, merged_at?: string | null) => {
     if (state === "open") return "bg-github-green";
     if (merged_at) return "bg-github-purple";
     return "bg-github-gray";
   };
-  
+
   // Mock data toggle component
   const MockDataToggle = () => (
     <div className="flex items-center gap-2 mb-6">
-      <Switch 
-        id="mock-data" 
-        checked={useMockData} 
-        onCheckedChange={setUseMockData} 
+      <Switch
+        id="mock-data"
+        checked={useMockData}
+        onCheckedChange={setUseMockData}
       />
       <label htmlFor="mock-data" className="cursor-pointer flex items-center gap-1">
         <Database className="h-4 w-4" />
@@ -241,10 +221,10 @@ const Dashboard = () => {
       </label>
     </div>
   );
-  
+
   // Parse repository owner and name for documentation links
   const [repoOwner, repoName] = repoFullName ? repoFullName.split('/') : ['', ''];
-  
+
   // Render welcome screen if no repository is selected
   if (!repoFullName) {
     return (
@@ -253,19 +233,19 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold">FOSS Project Analytics</h1>
           <ThemeToggle />
         </div>
-        
+
         <div className="text-center mb-12">
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Get comprehensive insights into any GitHub-hosted open source project. 
-            Enter a repository name below to start analyzing its health, community engagement, 
+            Get comprehensive insights into any GitHub-hosted open source project.
+            Enter a repository name below to start analyzing its health, community engagement,
             and overall impact.
           </p>
           <div className="max-w-xl mx-auto mb-6">
-            <RepositorySearch />
+            <RepositorySearch onSearch={handleSearch} />
           </div>
           <MockDataToggle />
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
           <Card>
             <CardHeader>
@@ -276,12 +256,12 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                View 15+ metrics including stars, forks, issue resolution times, PR merge rates, 
+                View 15+ metrics including stars, forks, issue resolution times, PR merge rates,
                 contributor growth, and more.
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -291,12 +271,12 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                All data is fetched in real-time from GitHub APIs, ensuring you always 
+                All data is fetched in real-time from GitHub APIs, ensuring you always
                 have the most up-to-date information.
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -306,13 +286,13 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                This dashboard is completely open source. You can contribute, customize 
+                This dashboard is completely open source. You can contribute, customize
                 it for your needs, or deploy your own instance.
               </p>
             </CardContent>
           </Card>
         </div>
-        
+
         <div className="mt-16 text-center text-muted-foreground text-sm">
           <p>
             Try with popular repositories like{" "}
@@ -332,21 +312,24 @@ const Dashboard = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Repository Analytics</h2>
+        <h2 className="text-2xl font-bold">Gitalytics</h2>
         <div className="flex items-center gap-4">
           <div className="w-[400px]">
-            <RepositorySearch defaultValue={repoFullName} />
+            <RepositorySearch
+              defaultValue={repoFullName}
+              onSearch={handleSearch}
+            />
           </div>
           <ThemeToggle />
         </div>
       </div>
-      
+
       <MockDataToggle />
-      
+
       {/* Repository Overview */}
       {repository ? (
         <Card className="mb-8">
@@ -358,9 +341,9 @@ const Dashboard = () => {
             <div className="flex-1">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <CardTitle className="text-xl">
-                  <a 
-                    href={repository.html_url} 
-                    target="_blank" 
+                  <a
+                    href={repository.html_url}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center hover:underline"
                   >
@@ -408,9 +391,9 @@ const Dashboard = () => {
             </div>
           </CardContent>
           <CardFooter>
-            <a 
-              href={repository.html_url} 
-              target="_blank" 
+            <a
+              href={repository.html_url}
+              target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center text-sm text-primary"
             >
@@ -430,7 +413,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       )}
-      
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <MetricCard
@@ -462,15 +445,15 @@ const Dashboard = () => {
           isLoading={isLoading}
         />
       </div>
-      
+
       {/* Documentation Metrics */}
-      <DocumentationChecklist 
+      <DocumentationChecklist
         docResults={docResults}
         isLoading={isLoading}
         repoOwner={repoOwner}
         repoName={repoName}
       />
-      
+
       {/* Secondary Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <MetricCard
@@ -497,8 +480,8 @@ const Dashboard = () => {
         <MetricCard
           title="Weekly Commits"
           value={
-            commitActivity 
-              ? commitActivity.slice(-1)[0]?.total.toLocaleString() || "0" 
+            commitActivity
+              ? commitActivity.slice(-1)[0]?.total.toLocaleString() || "0"
               : "0"
           }
           description="Commits in the last week"
@@ -506,7 +489,7 @@ const Dashboard = () => {
           isLoading={isLoading}
         />
       </div>
-      
+
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <Chart
@@ -531,7 +514,7 @@ const Dashboard = () => {
           isLoading={isLoading}
         />
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <Chart
           title="Issues"
@@ -556,7 +539,7 @@ const Dashboard = () => {
           isLoading={isLoading}
         />
       </div>
-      
+
       {/* Detailed Information Tabs */}
       <Tabs defaultValue="contributors" className="mb-8">
         <TabsList className="mb-4">
@@ -565,7 +548,7 @@ const Dashboard = () => {
           <TabsTrigger value="pulls">Recent PRs</TabsTrigger>
           <TabsTrigger value="releases">Releases</TabsTrigger>
         </TabsList>
-        
+
         {/* Contributors Tab */}
         <TabsContent value="contributors">
           <Card>
@@ -619,7 +602,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Issues Tab */}
         <TabsContent value="issues">
           <Card>
@@ -651,10 +634,9 @@ const Dashboard = () => {
                           {issue.title}
                         </a>
                         <div className="flex items-center">
-                          <div 
-                            className={`h-2 w-2 rounded-full mr-2 ${
-                              issue.state === "open" ? "bg-github-green" : "bg-github-gray"
-                            }`} 
+                          <div
+                            className={`h-2 w-2 rounded-full mr-2 ${issue.state === "open" ? "bg-github-green" : "bg-github-gray"
+                              }`}
                           />
                           <span className="text-xs text-muted-foreground">
                             {issue.state}
@@ -686,7 +668,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Pull Requests Tab */}
         <TabsContent value="pulls">
           <Card>
@@ -718,8 +700,8 @@ const Dashboard = () => {
                           {pr.title}
                         </a>
                         <div className="flex items-center">
-                          <div 
-                            className={`h-2 w-2 rounded-full mr-2 ${getStateColor(pr.state, pr.merged_at)}`} 
+                          <div
+                            className={`h-2 w-2 rounded-full mr-2 ${getStateColor(pr.state, pr.merged_at)}`}
                           />
                           <span className="text-xs text-muted-foreground">
                             {pr.merged_at ? "merged" : pr.state}
@@ -744,7 +726,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Releases Tab */}
         <TabsContent value="releases">
           <Card>

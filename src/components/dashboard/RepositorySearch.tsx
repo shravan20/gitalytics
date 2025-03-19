@@ -1,36 +1,45 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 interface RepositorySearchProps {
   defaultValue?: string;
+  onSearch?: (repo: string) => void;
 }
 
-const RepositorySearch = ({ defaultValue = "" }: RepositorySearchProps) => {
+const RepositorySearch = ({ defaultValue = "", onSearch }: RepositorySearchProps) => {
   const [repoInput, setRepoInput] = useState(defaultValue);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const repoParam = searchParams.get("repo");
+    if (repoParam) {
+      setRepoInput(repoParam);
+    }
+  }, [searchParams]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
     if (!repoInput) {
       toast.error("Please enter a repository name");
       return;
     }
     
-    // Check for owner/repo format
     const isValidFormat = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/.test(repoInput);
     if (!isValidFormat) {
       toast.error("Please enter a valid repository in the format 'owner/repository'");
       return;
     }
     
-    // Redirect to dashboard with repository as query param
+    if (onSearch) {
+      onSearch(repoInput);
+    }
+    
     navigate(`/?repo=${encodeURIComponent(repoInput)}`);
   };
 
