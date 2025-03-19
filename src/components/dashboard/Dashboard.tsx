@@ -239,102 +239,130 @@ const Dashboard = () => {
   // Render welcome screen if no repository is selected
   if (!repoFullName) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-10 w-10 border-2 border-primary">
-              <AvatarImage 
-                src="/favicon.ico" 
-                alt="Gitalytics Logo"
-                className="p-1"
-                style={{ 
-                  imageRendering: 'pixelated',
-                  objectFit: 'contain'
-                }}
-              />
-              <AvatarFallback>GA</AvatarFallback>
-            </Avatar>
-            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 text-transparent bg-clip-text">
-              Gitalytics
-            </span>
+      <div className="min-h-screen flex flex-col">
+        <div className="container mx-auto px-4 py-8 max-w-6xl flex-grow">
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center gap-2">
+              <Avatar className="h-10 w-10 border-2 border-primary">
+                <AvatarImage 
+                  src="/favicon.ico" 
+                  alt="Gitalytics Logo"
+                  className="p-1"
+                  style={{ 
+                    imageRendering: 'pixelated',
+                    objectFit: 'contain'
+                  }}
+                />
+                <AvatarFallback>GA</AvatarFallback>
+              </Avatar>
+              <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 text-transparent bg-clip-text">
+                Gitalytics
+              </span>
+            </div>
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
-        </div>
 
-        <div className="text-center mb-12">
-          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Get comprehensive insights into any GitHub-hosted open source project.
-            Enter a repository name below to start analyzing its health, community engagement,
-            and overall impact.
-          </p>
-          <div className="max-w-xl mx-auto mb-6">
-            <RepositorySearch onSearch={handleSearch} />
+          <div className="text-center mb-12">
+            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Get comprehensive insights into any GitHub-hosted open source project.
+              Enter a repository name below to start analyzing its health, community engagement,
+              and overall impact.
+            </p>
+            <div className="max-w-xl mx-auto mb-6">
+              <RepositorySearch onSearch={handleSearch} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Chart2 className="h-5 w-5 text-primary" />
+                  Comprehensive Analytics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  View 15+ metrics including stars, forks, issue resolution times, PR merge rates,
+                  contributor growth, and more.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <LineChart className="h-5 w-5 text-primary" />
+                  Real-Time Data
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  All data is fetched in real-time from GitHub APIs, ensuring you always
+                  have the most up-to-date information.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Code2 className="h-5 w-5 text-primary" />
+                  Open Source
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  This dashboard is completely open source. You can contribute, customize
+                  it for your needs, or deploy your own instance.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="mt-16 text-center text-muted-foreground text-sm">
+            <p>
+              Try with popular repositories like{" "}
+              <Button variant="link" className="p-0 h-auto" onClick={() => window.location.href = "/?repo=facebook/react"}>
+                facebook/react
+              </Button>
+              {", "}
+              <Button variant="link" className="p-0 h-auto" onClick={() => window.location.href = "/?repo=tensorflow/tensorflow"}>
+                tensorflow/tensorflow
+              </Button>
+              {", or "}
+              <Button variant="link" className="p-0 h-auto" onClick={() => window.location.href = "/?repo=microsoft/vscode"}>
+                microsoft/vscode
+              </Button>
+            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Chart2 className="h-5 w-5 text-primary" />
-                Comprehensive Analytics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                View 15+ metrics including stars, forks, issue resolution times, PR merge rates,
-                contributor growth, and more.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <LineChart className="h-5 w-5 text-primary" />
-                Real-Time Data
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                All data is fetched in real-time from GitHub APIs, ensuring you always
-                have the most up-to-date information.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Code2 className="h-5 w-5 text-primary" />
-                Open Source
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                This dashboard is completely open source. You can contribute, customize
-                it for your needs, or deploy your own instance.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mt-16 text-center text-muted-foreground text-sm">
-          <p>
-            Try with popular repositories like{" "}
-            <Button variant="link" className="p-0 h-auto" onClick={() => window.location.href = "/?repo=facebook/react"}>
-              facebook/react
-            </Button>
-            {", "}
-            <Button variant="link" className="p-0 h-auto" onClick={() => window.location.href = "/?repo=tensorflow/tensorflow"}>
-              tensorflow/tensorflow
-            </Button>
-            {", or "}
-            <Button variant="link" className="p-0 h-auto" onClick={() => window.location.href = "/?repo=microsoft/vscode"}>
-              microsoft/vscode
-            </Button>
-          </p>
-        </div>
+        <footer className="w-full border-t border-border mt-8">
+          <div className="container mx-auto px-4 py-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <span>Made with</span>
+            <Heart className="h-4 w-4 text-red-500 animate-pulse" />
+            <span>in</span>
+            <a 
+              href="https://github.com/shravan20/gitalytics" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-primary hover:underline"
+            >
+              <Github className="h-4 w-4" />
+              FOSS
+            </a>
+            <span>by</span>
+            <a 
+              href="https://github.com/shravan20" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Shravan
+            </a>
+          </div>
+        </footer>
       </div>
     );
   }
