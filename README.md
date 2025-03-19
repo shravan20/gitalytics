@@ -127,6 +127,29 @@ Key components and their purposes:
 - With authentication: 5,000 requests/hour
 - Use a GitHub token to increase your rate limit
 
+## 🚀 Performance Features
+
+### Caching System
+
+- **IndexedDB Storage**: Local caching of API responses
+- **Cache Duration**: 15-minute expiration
+- **Smart Caching**: Caches both successful responses and 404s
+- **Manual Control**: Clear cache button in UI
+
+### Performance Optimizations
+
+- **Parallel Data Fetching**: Concurrent API requests
+- **Request Batching**: Grouped API calls
+- **Error Recovery**: Automatic retries for failed requests
+- **Rate Limit Handling**: Smart backoff strategy
+
+### User Experience
+
+- **Progressive Loading**: Data loads in stages
+- **Cache Status**: Visual feedback for cached data
+- **Error Handling**: User-friendly error messages
+- **Responsive Design**: Works on all devices
+
 ## 🌟 Features Coming Soon
 
 - [ ] Repository comparison
