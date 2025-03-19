@@ -39,6 +39,7 @@ import Chart from "./Chart";
 import DocumentationChecklist from "./DocumentationChecklist";
 import { getMockData } from "@/utils/mockData";
 import { CacheManager } from "@/components/CacheManager";
+import { useNavigate } from "react-router-dom";
 
 import {
   Star,
@@ -86,6 +87,7 @@ const Dashboard = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const [repoFullName, setRepoFullName] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // Data states
   const [repository, setRepository] = useState<Repository | null>(null);
@@ -257,12 +259,19 @@ const Dashboard = () => {
     }
   };
 
+  const handleLogoClick = () => {
+    navigate('/');
+  };
+
   if (!repoFullName) {
     return (
       <div className="min-h-screen flex flex-col">
         <div className="container mx-auto px-4 py-8 max-w-6xl flex-grow">
           <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center gap-2">
+            <div 
+              className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={handleLogoClick}
+            >
               <Avatar className="h-10 w-10 border-2 border-primary">
                 <AvatarImage 
                   src="/favicon.ico" 
@@ -366,7 +375,10 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col">
       <div className="container mx-auto px-4 py-8 max-w-6xl flex-grow">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
+          <div 
+            className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
+            onClick={handleLogoClick}
+          >
             <Avatar className="h-10 w-10 border-2 border-primary">
               <AvatarImage 
                 src="/favicon.ico" 
