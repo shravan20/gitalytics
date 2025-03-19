@@ -89,7 +89,6 @@ const Dashboard = () => {
   const [repoFullName, setRepoFullName] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Data states
   const [repository, setRepository] = useState<Repository | null>(null);
   const [contributors, setContributors] = useState<Contributor[] | null>(null);
   const [issues, setIssues] = useState<Issue[] | null>(null);
@@ -99,20 +98,15 @@ const Dashboard = () => {
   const [releases, setReleases] = useState<Release[] | null>(null);
   const [docResults, setDocResults] = useState<DocCheckResult[] | null>(null);
 
-  // Loading states
   const [isLoading, setIsLoading] = useState(false);
-
-  // Mock data toggle
   const [useMockData, setUseMockData] = useState(false);
 
-  // Parse URL query parameter and reset states when repo changes
   useEffect(() => {
     const repoParam = searchParams.get("repo");
 
     if (repoParam) {
       setRepoFullName(repoParam);
 
-      // Reset states when repo changes
       if (!useMockData) {
         setRepository(null);
         setContributors(null);
@@ -126,7 +120,6 @@ const Dashboard = () => {
     }
   }, [searchParams, useMockData]);
 
-  // Fetch data when repo changes
   useEffect(() => {
     if (!repoFullName || useMockData) return;
 
@@ -136,12 +129,10 @@ const Dashboard = () => {
   const fetchData = async (repo: string) => {
     setIsLoading(true);
 
-    // Fetch repository data
     const repoData = await fetchRepository(repo);
     if (repoData) {
       setRepository(repoData);
 
-      // Fetch additional data concurrently
       const [
         contributorsData,
         issuesData,
@@ -172,68 +163,59 @@ const Dashboard = () => {
     setIsLoading(false);
   };
 
-  // Handle search from the search bar
   const handleSearch = (repo: string) => {
     if (repo !== repoFullName) {
       setIsLoading(true);
-      // States will be reset by the useEffect above
     }
   };
 
-  // Prepare chart data for commit activity
-  const commitActivityChartData = commitActivity
-    ? commitActivity.map((week) => ({
-      week: new Date(week.week * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      commits: week.total,
-    })).slice(-12)
+  const getLatestCommitCount = () => {
+    if (!Array.isArray(commitActivity) || commitActivity.length === 0) {
+      return "0";
+    }
+    const latestWeek = commitActivity[commitActivity.length - 1];
+    return latestWeek?.total?.toLocaleString() || "0";
+  };
+
+  const commitActivityChartData = Array.isArray(commitActivity)
+    ? commitActivity.map(week => ({
+        week: new Date(week.week * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        commits: week.total
+      }))
     : [];
 
-  // Prepare chart data for code frequency
-  const codeFrequencyChartData = codeFrequency
-    ? codeFrequency.map((week) => ({
-      week: new Date(week.week * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      additions: week.additions,
-      deletions: week.deletions,
-    })).slice(-12)
+  const codeFrequencyChartData = Array.isArray(codeFrequency)
+    ? codeFrequency.map(week => ({
+        week: new Date(week.week * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        additions: week.additions,
+        deletions: week.deletions
+      }))
     : [];
 
-  // Prepare chart data for issues
-  const issuesChartData = issues
+  const issuesChartData = Array.isArray(issues)
     ? [
-      { name: "Open", value: issues.filter((issue) => issue.state === "open").length },
-      { name: "Closed", value: issues.filter((issue) => issue.state === "closed").length },
-    ]
+        { name: "Open", value: issues.filter((issue) => issue.state === "open").length },
+        { name: "Closed", value: issues.filter((issue) => issue.state === "closed").length },
+      ]
     : [];
 
-  // Prepare chart data for pull requests
-  const pullRequestsChartData = pullRequests
+  const pullRequestsChartData = Array.isArray(pullRequests)
     ? [
-      { name: "Open", value: pullRequests.filter((pr) => pr.state === "open").length },
-      {
-        name: "Merged",
-        value: pullRequests.filter((pr) => pr.merged_at !== null).length,
-      },
-      {
-        name: "Closed (Unmerged)",
-        value: pullRequests.filter(
-          (pr) => pr.state === "closed" && pr.merged_at === null
-        ).length,
-      },
-    ]
+        { name: "Open", value: pullRequests.filter((pr) => pr.state === "open").length },
+        { name: "Merged", value: pullRequests.filter((pr) => pr.merged_at !== null).length },
+        { name: "Closed (Unmerged)", value: pullRequests.filter((pr) => pr.state === "closed" && pr.merged_at === null).length },
+      ]
     : [];
 
-  // Calculate metrics
   const issueResolutionTime = issues ? calculateIssueResolutionTime(issues) : null;
   const prMergeTime = pullRequests ? calculatePRMergeTime(pullRequests) : null;
 
-  // Helper function to get an issue/PR state color
   const getStateColor = (state: string, merged_at?: string | null) => {
     if (state === "open") return "bg-github-green";
     if (merged_at) return "bg-github-purple";
     return "bg-github-gray";
   };
 
-  // Mock data toggle component
   const MockDataToggle = () => (
     <div className="flex items-center gap-2 mb-6">
       <Switch
@@ -248,12 +230,9 @@ const Dashboard = () => {
     </div>
   );
 
-  // Parse repository owner and name for documentation links
   const [repoOwner, repoName] = repoFullName ? repoFullName.split('/') : ['', ''];
 
-  // Handle cache cleared event
   const handleCacheCleared = () => {
-    // Refetch data when cache is cleared
     if (repoFullName) {
       fetchData(repoFullName);
     }
@@ -409,7 +388,6 @@ const Dashboard = () => {
 
         <MockDataToggle />
 
-        {/* Repository Overview */}
         {repository ? (
           <Card className="mb-8">
             <CardHeader className="flex flex-row items-start gap-4">
@@ -493,83 +471,37 @@ const Dashboard = () => {
           </Card>
         )}
 
-        {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <MetricCard
             title="Stars"
-            value={repository?.stargazers_count.toLocaleString() || "0"}
-            description="Total repository stars"
+            value={repository?.stargazers_count?.toLocaleString() || "0"}
+            description="Repository stars"
             icon={<Star className="h-4 w-4" />}
             isLoading={isLoading}
           />
           <MetricCard
             title="Forks"
-            value={repository?.forks_count.toLocaleString() || "0"}
-            description="Total repository forks"
+            value={repository?.forks_count?.toLocaleString() || "0"}
+            description="Repository forks"
             icon={<GitFork className="h-4 w-4" />}
             isLoading={isLoading}
           />
           <MetricCard
-            title="Open Issues"
-            value={repository?.open_issues_count.toLocaleString() || "0"}
-            description="Current open issues"
+            title="Issues"
+            value={repository?.open_issues_count?.toLocaleString() || "0"}
+            description="Open issues"
             icon={<AlertCircle className="h-4 w-4" />}
             isLoading={isLoading}
           />
           <MetricCard
-            title="Contributors"
-            value={contributors?.length.toLocaleString() || "0"}
-            description="Unique contributors"
-            icon={<Users className="h-4 w-4" />}
-            isLoading={isLoading}
-          />
-        </div>
-
-        {/* Documentation Metrics */}
-        <DocumentationChecklist
-          docResults={docResults}
-          isLoading={isLoading}
-          repoOwner={repoOwner}
-          repoName={repoName}
-        />
-
-        {/* Secondary Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <MetricCard
-            title="Issue Resolution Time"
-            value={issueResolutionTime ? formatDuration(issueResolutionTime) : "N/A"}
-            description="Average time to close an issue"
-            icon={<Clock className="h-4 w-4" />}
-            isLoading={isLoading}
-          />
-          <MetricCard
-            title="PR Merge Time"
-            value={prMergeTime ? formatDuration(prMergeTime) : "N/A"}
-            description="Average time to merge a PR"
-            icon={<Clock className="h-4 w-4" />}
-            isLoading={isLoading}
-          />
-          <MetricCard
-            title="Releases"
-            value={releases?.length.toLocaleString() || "0"}
-            description="Total number of releases"
-            icon={<Tag className="h-4 w-4" />}
-            isLoading={isLoading}
-          />
-          <MetricCard
             title="Weekly Commits"
-            value={
-              commitActivity
-                ? commitActivity.slice(-1)[0]?.total.toLocaleString() || "0"
-                : "0"
-            }
+            value={getLatestCommitCount()}
             description="Commits in the last week"
             icon={<GitCommit className="h-4 w-4" />}
             isLoading={isLoading}
           />
         </div>
 
-        {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <Chart
             title="Commit Activity"
@@ -619,7 +551,6 @@ const Dashboard = () => {
           />
         </div>
 
-        {/* Detailed Information Tabs */}
         <Tabs defaultValue="contributors" className="mb-8">
           <TabsList className="mb-4">
             <TabsTrigger value="contributors">Contributors</TabsTrigger>
@@ -628,7 +559,6 @@ const Dashboard = () => {
             <TabsTrigger value="releases">Releases</TabsTrigger>
           </TabsList>
 
-          {/* Contributors Tab */}
           <TabsContent value="contributors">
             <Card>
               <CardHeader>
@@ -682,7 +612,6 @@ const Dashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* Issues Tab */}
           <TabsContent value="issues">
             <Card>
               <CardHeader>
@@ -748,7 +677,6 @@ const Dashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* Pull Requests Tab */}
           <TabsContent value="pulls">
             <Card>
               <CardHeader>
@@ -806,7 +734,6 @@ const Dashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* Releases Tab */}
           <TabsContent value="releases">
             <Card>
               <CardHeader>
@@ -869,7 +796,6 @@ const Dashboard = () => {
   );
 };
 
-// This is just to make the icons available in the welcome screen
 const Chart2 = Star;
 const LineChart = GitCommit;
 const Code2 = Code;
