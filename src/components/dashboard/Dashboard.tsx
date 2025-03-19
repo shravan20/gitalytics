@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import RepositorySearch from "./RepositorySearch";
@@ -57,6 +57,8 @@ import {
   ChevronRight,
   Database,
   FileText,
+  Heart,
+  Github,
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -239,7 +241,23 @@ const Dashboard = () => {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">FOSS Project Analytics</h1>
+          <div className="flex items-center gap-2">
+            <Avatar className="h-10 w-10 border-2 border-primary">
+              <AvatarImage 
+                src="/favicon.ico" 
+                alt="Gitalytics Logo"
+                className="p-1"
+                style={{ 
+                  imageRendering: 'pixelated',
+                  objectFit: 'contain'
+                }}
+              />
+              <AvatarFallback>GA</AvatarFallback>
+            </Avatar>
+            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 text-transparent bg-clip-text">
+              Gitalytics
+            </span>
+          </div>
           <ThemeToggle />
         </div>
 
@@ -252,7 +270,6 @@ const Dashboard = () => {
           <div className="max-w-xl mx-auto mb-6">
             <RepositorySearch onSearch={handleSearch} />
           </div>
-          <MockDataToggle />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
@@ -323,477 +340,513 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Gitalytics</h2>
-        <div className="flex items-center gap-4">
-          <div className="w-[400px]">
-            <RepositorySearch
-              defaultValue={repoFullName}
-              onSearch={handleSearch}
-            />
-          </div>
-          <CacheManager onCacheCleared={handleCacheCleared} />
-          <ThemeToggle />
-        </div>
-      </div>
-
-      <MockDataToggle />
-
-      {/* Repository Overview */}
-      {repository ? (
-        <Card className="mb-8">
-          <CardHeader className="flex flex-row items-start gap-4">
+    <div className="min-h-screen flex flex-col">
+      <div className="container mx-auto px-4 py-8 max-w-6xl flex-grow">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
             <Avatar className="h-12 w-12">
               <AvatarImage src={repository.owner.avatar_url} alt={repository.owner.login} />
               <AvatarFallback>{repository.owner.login.substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
-            <div className="flex-1">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <CardTitle className="text-xl">
-                  <a
-                    href={repository.html_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center hover:underline"
-                  >
-                    {repository.full_name}
-                    <ExternalLink className="h-4 w-4 ml-1" />
-                  </a>
-                </CardTitle>
-                <div className="flex gap-2">
-                  {repository.language && (
-                    <Badge variant="outline">{repository.language}</Badge>
-                  )}
-                  {repository.license && (
-                    <Badge variant="secondary">{repository.license.name}</Badge>
-                  )}
+            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 text-transparent bg-clip-text">
+              Gitalytics
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="w-[400px]">
+              <RepositorySearch
+                defaultValue={repoFullName}
+                onSearch={handleSearch}
+              />
+            </div>
+            <CacheManager onCacheCleared={handleCacheCleared} />
+            <ThemeToggle />
+          </div>
+        </div>
+
+        <MockDataToggle />
+
+        {/* Repository Overview */}
+        {repository ? (
+          <Card className="mb-8">
+            <CardHeader className="flex flex-row items-start gap-4">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={repository.owner.avatar_url} alt={repository.owner.login} />
+                <AvatarFallback>{repository.owner.login.substring(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <CardTitle className="text-xl">
+                    <a
+                      href={repository.html_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center hover:underline"
+                    >
+                      {repository.full_name}
+                      <ExternalLink className="h-4 w-4 ml-1" />
+                    </a>
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    {repository.language && (
+                      <Badge variant="outline">{repository.language}</Badge>
+                    )}
+                    {repository.license && (
+                      <Badge variant="secondary">{repository.license.name}</Badge>
+                    )}
+                  </div>
+                </div>
+                {repository.description && (
+                  <CardDescription className="mt-1 text-sm">
+                    {repository.description}
+                  </CardDescription>
+                )}
+                <div className="flex flex-wrap gap-3 mt-3">
+                  {repository.topics?.map((topic, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {topic}
+                    </Badge>
+                  ))}
                 </div>
               </div>
-              {repository.description && (
-                <CardDescription className="mt-1 text-sm">
-                  {repository.description}
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  Created: {formatDate(repository.created_at)}
+                </div>
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  Last updated: {formatDate(repository.updated_at)}
+                </div>
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  Last push: {formatDate(repository.pushed_at)}
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <a
+                href={repository.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-sm text-primary"
+              >
+                View on GitHub
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </a>
+            </CardFooter>
+          </Card>
+        ) : (
+          <Card className="mb-8">
+            <CardHeader>
+              <div className="h-8 w-48 skeleton"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-4 w-full skeleton mb-2"></div>
+              <div className="h-4 w-3/4 skeleton"></div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <MetricCard
+            title="Stars"
+            value={repository?.stargazers_count.toLocaleString() || "0"}
+            description="Total repository stars"
+            icon={<Star className="h-4 w-4" />}
+            isLoading={isLoading}
+          />
+          <MetricCard
+            title="Forks"
+            value={repository?.forks_count.toLocaleString() || "0"}
+            description="Total repository forks"
+            icon={<GitFork className="h-4 w-4" />}
+            isLoading={isLoading}
+          />
+          <MetricCard
+            title="Open Issues"
+            value={repository?.open_issues_count.toLocaleString() || "0"}
+            description="Current open issues"
+            icon={<AlertCircle className="h-4 w-4" />}
+            isLoading={isLoading}
+          />
+          <MetricCard
+            title="Contributors"
+            value={contributors?.length.toLocaleString() || "0"}
+            description="Unique contributors"
+            icon={<Users className="h-4 w-4" />}
+            isLoading={isLoading}
+          />
+        </div>
+
+        {/* Documentation Metrics */}
+        <DocumentationChecklist
+          docResults={docResults}
+          isLoading={isLoading}
+          repoOwner={repoOwner}
+          repoName={repoName}
+        />
+
+        {/* Secondary Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <MetricCard
+            title="Issue Resolution Time"
+            value={issueResolutionTime ? formatDuration(issueResolutionTime) : "N/A"}
+            description="Average time to close an issue"
+            icon={<Clock className="h-4 w-4" />}
+            isLoading={isLoading}
+          />
+          <MetricCard
+            title="PR Merge Time"
+            value={prMergeTime ? formatDuration(prMergeTime) : "N/A"}
+            description="Average time to merge a PR"
+            icon={<Clock className="h-4 w-4" />}
+            isLoading={isLoading}
+          />
+          <MetricCard
+            title="Releases"
+            value={releases?.length.toLocaleString() || "0"}
+            description="Total number of releases"
+            icon={<Tag className="h-4 w-4" />}
+            isLoading={isLoading}
+          />
+          <MetricCard
+            title="Weekly Commits"
+            value={
+              commitActivity
+                ? commitActivity.slice(-1)[0]?.total.toLocaleString() || "0"
+                : "0"
+            }
+            description="Commits in the last week"
+            icon={<GitCommit className="h-4 w-4" />}
+            isLoading={isLoading}
+          />
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <Chart
+            title="Commit Activity"
+            description="Weekly commits over time"
+            data={commitActivityChartData}
+            type="multi"
+            xKey="week"
+            yKeys={[{ key: "commits", name: "Commits", color: "hsl(var(--primary))" }]}
+            isLoading={isLoading}
+          />
+          <Chart
+            title="Code Frequency"
+            description="Weekly code additions and deletions"
+            data={codeFrequencyChartData}
+            type="multi"
+            xKey="week"
+            yKeys={[
+              { key: "additions", name: "Additions", color: "hsl(var(--github-green))" },
+              { key: "deletions", name: "Deletions", color: "hsl(var(--github-red))" },
+            ]}
+            isLoading={isLoading}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <Chart
+            title="Issues"
+            description="Open vs. closed issues"
+            data={issuesChartData}
+            type="multi"
+            xKey="name"
+            yKeys={[
+              { key: "value", name: "Count", color: "hsl(var(--primary))" },
+            ]}
+            isLoading={isLoading}
+          />
+          <Chart
+            title="Pull Requests"
+            description="Open, merged, and closed PRs"
+            data={pullRequestsChartData}
+            type="multi"
+            xKey="name"
+            yKeys={[
+              { key: "value", name: "Count", color: "hsl(var(--primary))" },
+            ]}
+            isLoading={isLoading}
+          />
+        </div>
+
+        {/* Detailed Information Tabs */}
+        <Tabs defaultValue="contributors" className="mb-8">
+          <TabsList className="mb-4">
+            <TabsTrigger value="contributors">Contributors</TabsTrigger>
+            <TabsTrigger value="issues">Recent Issues</TabsTrigger>
+            <TabsTrigger value="pulls">Recent PRs</TabsTrigger>
+            <TabsTrigger value="releases">Releases</TabsTrigger>
+          </TabsList>
+
+          {/* Contributors Tab */}
+          <TabsContent value="contributors">
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Contributors</CardTitle>
+                <CardDescription>
+                  Most active contributors by commit count
                 </CardDescription>
-              )}
-              <div className="flex flex-wrap gap-3 mt-3">
-                {repository.topics?.map((topic, index) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    {topic}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center">
-                <Calendar className="h-4 w-4 mr-1" />
-                Created: {formatDate(repository.created_at)}
-              </div>
-              <div className="flex items-center">
-                <Calendar className="h-4 w-4 mr-1" />
-                Last updated: {formatDate(repository.updated_at)}
-              </div>
-              <div className="flex items-center">
-                <Calendar className="h-4 w-4 mr-1" />
-                Last push: {formatDate(repository.pushed_at)}
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <a
-              href={repository.html_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center text-sm text-primary"
-            >
-              View on GitHub
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </a>
-          </CardFooter>
-        </Card>
-      ) : (
-        <Card className="mb-8">
-          <CardHeader>
-            <div className="h-8 w-48 skeleton"></div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-4 w-full skeleton mb-2"></div>
-            <div className="h-4 w-3/4 skeleton"></div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <MetricCard
-          title="Stars"
-          value={repository?.stargazers_count.toLocaleString() || "0"}
-          description="Total repository stars"
-          icon={<Star className="h-4 w-4" />}
-          isLoading={isLoading}
-        />
-        <MetricCard
-          title="Forks"
-          value={repository?.forks_count.toLocaleString() || "0"}
-          description="Total repository forks"
-          icon={<GitFork className="h-4 w-4" />}
-          isLoading={isLoading}
-        />
-        <MetricCard
-          title="Open Issues"
-          value={repository?.open_issues_count.toLocaleString() || "0"}
-          description="Current open issues"
-          icon={<AlertCircle className="h-4 w-4" />}
-          isLoading={isLoading}
-        />
-        <MetricCard
-          title="Contributors"
-          value={contributors?.length.toLocaleString() || "0"}
-          description="Unique contributors"
-          icon={<Users className="h-4 w-4" />}
-          isLoading={isLoading}
-        />
-      </div>
-
-      {/* Documentation Metrics */}
-      <DocumentationChecklist
-        docResults={docResults}
-        isLoading={isLoading}
-        repoOwner={repoOwner}
-        repoName={repoName}
-      />
-
-      {/* Secondary Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <MetricCard
-          title="Issue Resolution Time"
-          value={issueResolutionTime ? formatDuration(issueResolutionTime) : "N/A"}
-          description="Average time to close an issue"
-          icon={<Clock className="h-4 w-4" />}
-          isLoading={isLoading}
-        />
-        <MetricCard
-          title="PR Merge Time"
-          value={prMergeTime ? formatDuration(prMergeTime) : "N/A"}
-          description="Average time to merge a PR"
-          icon={<Clock className="h-4 w-4" />}
-          isLoading={isLoading}
-        />
-        <MetricCard
-          title="Releases"
-          value={releases?.length.toLocaleString() || "0"}
-          description="Total number of releases"
-          icon={<Tag className="h-4 w-4" />}
-          isLoading={isLoading}
-        />
-        <MetricCard
-          title="Weekly Commits"
-          value={
-            commitActivity
-              ? commitActivity.slice(-1)[0]?.total.toLocaleString() || "0"
-              : "0"
-          }
-          description="Commits in the last week"
-          icon={<GitCommit className="h-4 w-4" />}
-          isLoading={isLoading}
-        />
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Chart
-          title="Commit Activity"
-          description="Weekly commits over time"
-          data={commitActivityChartData}
-          type="multi"
-          xKey="week"
-          yKeys={[{ key: "commits", name: "Commits", color: "hsl(var(--primary))" }]}
-          isLoading={isLoading}
-        />
-        <Chart
-          title="Code Frequency"
-          description="Weekly code additions and deletions"
-          data={codeFrequencyChartData}
-          type="multi"
-          xKey="week"
-          yKeys={[
-            { key: "additions", name: "Additions", color: "hsl(var(--github-green))" },
-            { key: "deletions", name: "Deletions", color: "hsl(var(--github-red))" },
-          ]}
-          isLoading={isLoading}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Chart
-          title="Issues"
-          description="Open vs. closed issues"
-          data={issuesChartData}
-          type="multi"
-          xKey="name"
-          yKeys={[
-            { key: "value", name: "Count", color: "hsl(var(--primary))" },
-          ]}
-          isLoading={isLoading}
-        />
-        <Chart
-          title="Pull Requests"
-          description="Open, merged, and closed PRs"
-          data={pullRequestsChartData}
-          type="multi"
-          xKey="name"
-          yKeys={[
-            { key: "value", name: "Count", color: "hsl(var(--primary))" },
-          ]}
-          isLoading={isLoading}
-        />
-      </div>
-
-      {/* Detailed Information Tabs */}
-      <Tabs defaultValue="contributors" className="mb-8">
-        <TabsList className="mb-4">
-          <TabsTrigger value="contributors">Contributors</TabsTrigger>
-          <TabsTrigger value="issues">Recent Issues</TabsTrigger>
-          <TabsTrigger value="pulls">Recent PRs</TabsTrigger>
-          <TabsTrigger value="releases">Releases</TabsTrigger>
-        </TabsList>
-
-        {/* Contributors Tab */}
-        <TabsContent value="contributors">
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Contributors</CardTitle>
-              <CardDescription>
-                Most active contributors by commit count
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-4 py-3">
-                    <div className="h-10 w-10 rounded-full skeleton"></div>
-                    <div className="flex-1">
-                      <div className="h-4 w-32 skeleton mb-2"></div>
-                      <div className="h-3 w-24 skeleton"></div>
-                    </div>
-                  </div>
-                ))
-              ) : contributors && contributors.length > 0 ? (
-                <div className="space-y-4">
-                  {contributors.slice(0, 10).map((contributor, index) => (
-                    <div key={index} className="flex items-center gap-4">
-                      <Avatar>
-                        <AvatarImage src={contributor.avatar_url} alt={contributor.login} />
-                        <AvatarFallback>{contributor.login.substring(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 py-3">
+                      <div className="h-10 w-10 rounded-full skeleton"></div>
                       <div className="flex-1">
-                        <div className="font-medium">{contributor.login}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {contributor.contributions.toLocaleString()} contributions
-                        </div>
+                        <div className="h-4 w-32 skeleton mb-2"></div>
+                        <div className="h-3 w-24 skeleton"></div>
                       </div>
-                      <a
-                        href={contributor.html_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No contributors data available
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Issues Tab */}
-        <TabsContent value="issues">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Issues</CardTitle>
-              <CardDescription>
-                Latest reported issues and their status
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="py-3">
-                    <div className="h-5 w-full skeleton mb-2"></div>
-                    <div className="h-4 w-1/2 skeleton"></div>
-                  </div>
-                ))
-              ) : issues && issues.length > 0 ? (
-                <div className="space-y-4">
-                  {issues.slice(0, 10).map((issue, index) => (
-                    <div key={index} className="border-b border-border pb-4 last:border-b-0 last:pb-0">
-                      <div className="flex items-center justify-between mb-1">
+                  ))
+                ) : contributors && contributors.length > 0 ? (
+                  <div className="space-y-4">
+                    {contributors.slice(0, 10).map((contributor, index) => (
+                      <div key={index} className="flex items-center gap-4">
+                        <Avatar>
+                          <AvatarImage src={contributor.avatar_url} alt={contributor.login} />
+                          <AvatarFallback>{contributor.login.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="font-medium">{contributor.login}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {contributor.contributions.toLocaleString()} contributions
+                          </div>
+                        </div>
                         <a
-                          href={issue.html_url}
+                          href={contributor.html_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium hover:underline flex-1"
+                          className="text-sm text-primary"
                         >
-                          {issue.title}
+                          <ExternalLink className="h-4 w-4" />
                         </a>
-                        <div className="flex items-center">
-                          <div
-                            className={`h-2 w-2 rounded-full mr-2 ${issue.state === "open" ? "bg-github-green" : "bg-github-gray"
-                              }`}
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            {issue.state}
-                          </span>
-                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>#{issue.number}</span>
-                        <span>opened by {issue.user.login}</span>
-                        <span>on {formatDate(issue.created_at)}</span>
-                      </div>
-                      {issue.labels.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {issue.labels.map((label, labelIndex) => (
-                            <Badge key={labelIndex} variant="outline" className="text-xs">
-                              {label.name}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No issues data available
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Pull Requests Tab */}
-        <TabsContent value="pulls">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Pull Requests</CardTitle>
-              <CardDescription>
-                Latest pull requests and their status
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="py-3">
-                    <div className="h-5 w-full skeleton mb-2"></div>
-                    <div className="h-4 w-1/2 skeleton"></div>
+                    ))}
                   </div>
-                ))
-              ) : pullRequests && pullRequests.length > 0 ? (
-                <div className="space-y-4">
-                  {pullRequests.slice(0, 10).map((pr, index) => (
-                    <div key={index} className="border-b border-border pb-4 last:border-b-0 last:pb-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <a
-                          href={pr.html_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium hover:underline flex-1"
-                        >
-                          {pr.title}
-                        </a>
-                        <div className="flex items-center">
-                          <div
-                            className={`h-2 w-2 rounded-full mr-2 ${getStateColor(pr.state, pr.merged_at)}`}
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            {pr.merged_at ? "merged" : pr.state}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>#{pr.number}</span>
-                        <span>opened by {pr.user.login}</span>
-                        <span>on {formatDate(pr.created_at)}</span>
-                        {pr.merged_at && <span>merged on {formatDate(pr.merged_at)}</span>}
-                        {pr.closed_at && !pr.merged_at && <span>closed on {formatDate(pr.closed_at)}</span>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No pull requests data available
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Releases Tab */}
-        <TabsContent value="releases">
-          <Card>
-            <CardHeader>
-              <CardTitle>Releases</CardTitle>
-              <CardDescription>
-                Version history and release notes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="mb-6">
-                    <div className="h-6 w-24 skeleton mb-2"></div>
-                    <div className="h-4 w-full skeleton mb-2"></div>
-                    <div className="h-4 w-3/4 skeleton"></div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No contributors data available
                   </div>
-                ))
-              ) : releases && releases.length > 0 ? (
-                <div className="space-y-6">
-                  {releases.map((release, index) => (
-                    <div key={index} className="border-b border-border pb-6 last:border-b-0 last:pb-0">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-lg font-semibold">
-                          {release.name || release.tag_name}
-                        </h3>
-                        <Badge variant="outline">{release.tag_name}</Badge>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Issues Tab */}
+          <TabsContent value="issues">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Issues</CardTitle>
+                <CardDescription>
+                  Latest reported issues and their status
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="py-3">
+                      <div className="h-5 w-full skeleton mb-2"></div>
+                      <div className="h-4 w-1/2 skeleton"></div>
+                    </div>
+                  ))
+                ) : issues && issues.length > 0 ? (
+                  <div className="space-y-4">
+                    {issues.slice(0, 10).map((issue, index) => (
+                      <div key={index} className="border-b border-border pb-4 last:border-b-0 last:pb-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <a
+                            href={issue.html_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium hover:underline flex-1"
+                          >
+                            {issue.title}
+                          </a>
+                          <div className="flex items-center">
+                            <div
+                              className={`h-2 w-2 rounded-full mr-2 ${issue.state === "open" ? "bg-github-green" : "bg-github-gray"
+                                }`}
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              {issue.state}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>#{issue.number}</span>
+                          <span>opened by {issue.user.login}</span>
+                          <span>on {formatDate(issue.created_at)}</span>
+                        </div>
+                        {issue.labels.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {issue.labels.map((label, labelIndex) => (
+                              <Badge key={labelIndex} variant="outline" className="text-xs">
+                                {label.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          Released on {formatDate(release.published_at || release.created_at)}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No issues data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Pull Requests Tab */}
+          <TabsContent value="pulls">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Pull Requests</CardTitle>
+                <CardDescription>
+                  Latest pull requests and their status
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="py-3">
+                      <div className="h-5 w-full skeleton mb-2"></div>
+                      <div className="h-4 w-1/2 skeleton"></div>
+                    </div>
+                  ))
+                ) : pullRequests && pullRequests.length > 0 ? (
+                  <div className="space-y-4">
+                    {pullRequests.slice(0, 10).map((pr, index) => (
+                      <div key={index} className="border-b border-border pb-4 last:border-b-0 last:pb-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <a
+                            href={pr.html_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium hover:underline flex-1"
+                          >
+                            {pr.title}
+                          </a>
+                          <div className="flex items-center">
+                            <div
+                              className={`h-2 w-2 rounded-full mr-2 ${getStateColor(pr.state, pr.merged_at)}`}
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              {pr.merged_at ? "merged" : pr.state}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>#{pr.number}</span>
+                          <span>opened by {pr.user.login}</span>
+                          <span>on {formatDate(pr.created_at)}</span>
+                          {pr.merged_at && <span>merged on {formatDate(pr.merged_at)}</span>}
+                          {pr.closed_at && !pr.merged_at && <span>closed on {formatDate(pr.closed_at)}</span>}
                         </div>
                       </div>
-                      <div className="flex justify-start">
-                        <a
-                          href={release.html_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-primary flex items-center"
-                        >
-                          View on GitHub
-                          <ExternalLink className="h-3 w-3 ml-1" />
-                        </a>
-                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No pull requests data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Releases Tab */}
+          <TabsContent value="releases">
+            <Card>
+              <CardHeader>
+                <CardTitle>Releases</CardTitle>
+                <CardDescription>
+                  Version history and release notes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="mb-6">
+                      <div className="h-6 w-24 skeleton mb-2"></div>
+                      <div className="h-4 w-full skeleton mb-2"></div>
+                      <div className="h-4 w-3/4 skeleton"></div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No releases available
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  ))
+                ) : releases && releases.length > 0 ? (
+                  <div className="space-y-6">
+                    {releases.map((release, index) => (
+                      <div key={index} className="border-b border-border pb-6 last:border-b-0 last:pb-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-lg font-semibold">
+                            {release.name || release.tag_name}
+                          </h3>
+                          <Badge variant="outline">{release.tag_name}</Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1" />
+                            Released on {formatDate(release.published_at || release.created_at)}
+                          </div>
+                        </div>
+                        <div className="flex justify-start">
+                          <a
+                            href={release.html_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary flex items-center"
+                          >
+                            View on GitHub
+                            <ExternalLink className="h-3 w-3 ml-1" />
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No releases available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+      
+      <footer className="w-full border-t border-border mt-8">
+        <div className="container mx-auto px-4 py-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <span>Made with</span>
+          <Heart className="h-4 w-4 text-red-500 animate-pulse" />
+          <span>in</span>
+          <a 
+            href="https://github.com/shravan20/gitalytics" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-primary hover:underline"
+          >
+            <Github className="h-4 w-4" />
+            FOSS
+          </a>
+          <span>by</span>
+          <a 
+            href="https://github.com/shravan20" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            Shravan
+          </a>
+        </div>
+      </footer>
     </div>
   );
 };
