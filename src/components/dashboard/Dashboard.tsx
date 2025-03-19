@@ -57,7 +57,30 @@ import {
   ChevronRight,
   Database,
   FileText,
+  Heart,
+  Github,
 } from "lucide-react";
+
+const Footer = () => (
+  <footer className="w-full border-t border-border mt-8">
+    <div className="container mx-auto px-4 py-6">
+      <div className="flex items-center justify-center gap-3 text-sm">
+        <span className="text-muted-foreground">Made with</span>
+        <Heart className="h-4 w-4 text-red-500 animate-pulse" fill="currentColor" />
+        <span className="text-muted-foreground">in</span>
+        <a 
+          href="https://github.com/shravan20/gitalytics" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+        >
+          <Github className="h-4 w-4 text-primary" />
+          <span className="text-primary font-medium">FOSS</span>
+        </a>
+      </div>
+    </div>
+  </footer>
+);
 
 const Dashboard = () => {
   const location = useLocation();
@@ -334,6 +357,7 @@ const Dashboard = () => {
             </p>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -828,6 +852,7 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <Footer />
     </div>
   );
 };
