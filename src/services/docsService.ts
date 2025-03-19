@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { cacheService } from "./cacheService";
 
 // Documentation file types to check for
 export interface DocFile {
@@ -110,6 +111,44 @@ const getFetchOptions = () => {
   return options;
 };
 
+// Helper function to fetch with cache and handle 404s
+const fetchDocFile = async (baseUrl: string, path: string): Promise<any> => {
+  const cacheKey = `doc:${baseUrl}/${path}`;
+  
+  // Try to get from cache first, including 404 responses
+  const cachedData = await cacheService.get(cacheKey);
+  if (cachedData) {
+    // If we cached a 404, return null
+    if (cachedData.status === 404) {
+      return null;
+    }
+    return cachedData;
+  }
+
+  try {
+    const response = await fetch(`${baseUrl}/${path}`, getFetchOptions());
+    
+    // Handle 404s - cache them too
+    if (response.status === 404) {
+      await cacheService.set(cacheKey, { status: 404, path });
+      return null;
+    }
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    await cacheService.set(cacheKey, data);
+    return data;
+  } catch (error) {
+    if (error.message.includes('404')) {
+      await cacheService.set(cacheKey, { status: 404, path });
+    }
+    return null;
+  }
+};
+
 // Fetch documentation file status
 export const checkDocumentationFiles = async (repoFullName: string): Promise<DocCheckResult[] | null> => {
   try {
@@ -129,35 +168,13 @@ export const checkDocumentationFiles = async (repoFullName: string): Promise<Doc
         
         // Try all possible paths for this documentation file
         for (const path of allPaths) {
-          try {
-            const response = await fetch(`${baseUrl}/${path}`, getFetchOptions());
-            
-            // If file exists (200 OK)
-            if (response.status === 200) {
-              const data = await response.json();
-              return {
-                file,
-                exists: true,
-                url: data.html_url || `https://github.com/${repoFullName}/blob/main/${path}`
-              };
-            }
-            
-            // If file not found (404), continue to next path
-            if (response.status === 404) {
-              continue;
-            }
-            
-            // For other errors, throw to be caught by error handler
-            if (!response.ok) {
-              throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            
-          } catch (error) {
-            // Only log non-404 errors
-            if (error instanceof Error && !error.message.includes('404')) {
-              console.error(`Error checking ${path}:`, error);
-            }
-            continue;
+          const data = await fetchDocFile(baseUrl, path);
+          if (data) {
+            return {
+              file,
+              exists: true,
+              url: data.html_url || `https://github.com/${repoFullName}/blob/main/${path}`
+            };
           }
         }
         
@@ -182,6 +199,35 @@ export const checkDocumentationFiles = async (repoFullName: string): Promise<Doc
     console.error("Failed to check documentation files:", error);
     toast.error("Failed to check documentation files");
     return null;
+  }
+};
+
+// Add utility function to check if docs are cached
+export const areDocsCached = async (repoFullName: string): Promise<boolean> => {
+  const baseUrl = `https://api.github.com/repos/${repoFullName}/contents`;
+  const mainFiles = ['README.md', 'LICENSE']; // Check main files as indicators
+  
+  for (const file of mainFiles) {
+    const cacheKey = `doc:${baseUrl}/${file}`;
+    const cachedData = await cacheService.get(cacheKey);
+    if (!cachedData) {
+      return false;
+    }
+  }
+  
+  return true;
+};
+
+// Add function to clear docs cache
+export const clearDocsCache = async (repoFullName: string): Promise<void> => {
+  const baseUrl = `https://api.github.com/repos/${repoFullName}/contents`;
+  
+  for (const file of documentationFiles) {
+    const allPaths = [file.path, ...(file.alternativePaths || [])];
+    for (const path of allPaths) {
+      const cacheKey = `doc:${baseUrl}/${path}`;
+      await cacheService.delete(cacheKey);
+    }
   }
 };
 

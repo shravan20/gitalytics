@@ -146,12 +146,12 @@ class CacheService {
     return new Promise((resolve) => {
       const transaction = this.db!.transaction([CACHE_STORE], 'readwrite');
       const store = transaction.objectStore(CACHE_STORE);
-      
+
       // Get count before clearing
       const countRequest = store.count();
       countRequest.onsuccess = () => {
         const count = countRequest.result;
-        
+
         // Clear the store
         const clearRequest = store.clear();
         clearRequest.onsuccess = () => {
@@ -188,7 +188,7 @@ class CacheService {
           size: new Blob([JSON.stringify(entries)]).size,
           entries
         };
-        
+
         if (this.debug) {
           console.log('📊 Cache Statistics:', {
             count: stats.count,
@@ -200,7 +200,7 @@ class CacheService {
             }))
           });
         }
-        
+
         resolve(stats);
       };
 

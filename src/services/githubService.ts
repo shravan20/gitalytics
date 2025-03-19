@@ -133,27 +133,87 @@ const handleApiError = (error: any, message: string) => {
   return null;
 };
 
-// Helper function to fetch with cache
-const fetchWithCache = async (url: string, options: RequestInit, cacheKey: string) => {
-  // Try to get from cache first
+// Helper function to fetch with cache and handle 404s
+const fetchWithCache = async (url: string, options: RequestInit, cacheKey: string, retries = 2) => {
+  // Try to get from cache first, including 404 responses
   const cachedData = await cacheService.get(cacheKey);
   if (cachedData) {
+    // If we cached a 404, throw it
+    if (cachedData.status === 404) {
+      throw new Error('404');
+    }
     return cachedData;
   }
 
-  // If not in cache, fetch from API
-  const response = await fetch(url, options);
-  
-  if (!response.ok) {
-    throw new Error(`HTTP error! Status: ${response.status}`);
+  // If not in cache, fetch from API with retry logic
+  let lastError;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      
+      // Handle rate limiting
+      if (response.status === 403) {
+        const resetTime = response.headers.get('X-RateLimit-Reset');
+        const waitTime = resetTime ? parseInt(resetTime) * 1000 - Date.now() : 0;
+        if (waitTime > 0 && i < retries) {
+          await new Promise(resolve => setTimeout(resolve, Math.min(waitTime, 5000)));
+          continue;
+        }
+      }
+
+      // Handle 404s - cache them too
+      if (response.status === 404) {
+        const notFoundData = { status: 404, url };
+        await cacheService.set(cacheKey, notFoundData);
+        throw new Error('404');
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Cache successful response
+      await cacheService.set(cacheKey, data);
+      
+      return data;
+    } catch (error) {
+      lastError = error;
+      // Don't retry 404s
+      if (error.message === '404') {
+        throw error;
+      }
+      if (i < retries) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+      }
+    }
   }
   
-  const data = await response.json();
-  
-  // Cache the response
-  await cacheService.set(cacheKey, data);
-  
-  return data;
+  throw lastError;
+};
+
+// Batch fetch helper to reduce API calls
+const batchFetch = async <T>(
+  items: string[],
+  fetchFn: (item: string) => Promise<T>,
+  batchSize = 3
+): Promise<T[]> => {
+  const results: T[] = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await Promise.all(
+      batch.map(item => fetchFn(item).catch(error => {
+        console.error(`Error fetching ${item}:`, error);
+        return null;
+      }))
+    );
+    results.push(...batchResults.filter(Boolean));
+    if (i + batchSize < items.length) {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Rate limiting delay
+    }
+  }
+  return results;
 };
 
 // Fetch repository info
@@ -168,6 +228,37 @@ export const fetchRepository = async (repoFullName: string): Promise<Repository 
   } catch (error) {
     return handleApiError(error, "Failed to fetch repository data");
   }
+};
+
+// Fetch all data in parallel with proper error handling
+export const fetchAllRepositoryData = async (repoFullName: string) => {
+  const fetchTasks = {
+    repository: fetchRepository(repoFullName),
+    contributors: fetchContributors(repoFullName),
+    issues: fetchIssues(repoFullName),
+    pullRequests: fetchPullRequests(repoFullName),
+    commitActivity: fetchCommitActivity(repoFullName),
+    codeFrequency: fetchCodeFrequency(repoFullName),
+    releases: fetchReleases(repoFullName)
+  };
+
+  const results = await Promise.allSettled(Object.entries(fetchTasks).map(async ([key, promise]) => {
+    try {
+      return { key, data: await promise };
+    } catch (error) {
+      console.error(`Error fetching ${key}:`, error);
+      return { key, data: null };
+    }
+  }));
+
+  return results.reduce((acc, result) => {
+    if (result.status === 'fulfilled') {
+      acc[result.value.key] = result.value.data;
+    } else {
+      acc[result.value.key] = null;
+    }
+    return acc;
+  }, {} as Record<string, any>);
 };
 
 // Fetch contributors
@@ -318,4 +409,26 @@ export const formatDate = (dateString: string): string => {
     month: 'short',
     day: 'numeric'
   }).format(date);
+};
+
+// Add utility function for prefetching
+export const prefetchRepository = async (repoFullName: string) => {
+  try {
+    const repo = await fetchRepository(repoFullName);
+    if (repo) {
+      // Prefetch other data in the background
+      fetchAllRepositoryData(repoFullName).catch(() => {});
+    }
+    return repo;
+  } catch (error) {
+    console.error('Error prefetching repository:', error);
+    return null;
+  }
+};
+
+// Add function to check if data is cached
+export const isDataCached = async (repoFullName: string): Promise<boolean> => {
+  const cacheKey = `repo:${repoFullName}`;
+  const cachedData = await cacheService.get(cacheKey);
+  return cachedData !== null;
 };
