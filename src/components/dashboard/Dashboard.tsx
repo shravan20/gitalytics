@@ -38,6 +38,7 @@ import MetricCard from "./MetricCard";
 import Chart from "./Chart";
 import DocumentationChecklist from "./DocumentationChecklist";
 import { getMockData } from "@/utils/mockData";
+import { CacheManager } from "@/components/CacheManager";
 
 import {
   Star,
@@ -225,6 +226,14 @@ const Dashboard = () => {
   // Parse repository owner and name for documentation links
   const [repoOwner, repoName] = repoFullName ? repoFullName.split('/') : ['', ''];
 
+  // Handle cache cleared event
+  const handleCacheCleared = () => {
+    // Refetch data when cache is cleared
+    if (repoFullName) {
+      fetchData(repoFullName);
+    }
+  };
+
   // Render welcome screen if no repository is selected
   if (!repoFullName) {
     return (
@@ -324,6 +333,7 @@ const Dashboard = () => {
               onSearch={handleSearch}
             />
           </div>
+          <CacheManager onCacheCleared={handleCacheCleared} />
           <ThemeToggle />
         </div>
       </div>
