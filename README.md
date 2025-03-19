@@ -2,7 +2,7 @@
 
 > Powerful analytics and insights for GitHub repositories
 
-Gitalytics is a modern web application that provides comprehensive analytics for any public GitHub repository. Get instant insights into repository health, community engagement, and development activity.
+Gitalytics; an instant insights into repository health, community engagement, and development activity.
 
 ![License](https://img.shields.io/github/license/shravan20/gitalytics)
 
