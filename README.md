@@ -6,7 +6,7 @@ Gitalytics; an instant insights into repository health, community engagement, an
 
 ![License](https://img.shields.io/github/license/shravan20/gitalytics)
 
-## ✨ Features
+## Features
 
 - **Repository Overview**
   - Stars, forks, and watchers count
@@ -32,7 +32,7 @@ Gitalytics; an instant insights into repository health, community engagement, an
   - Contributing guidelines status
   - Issue/PR templates verification
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -77,7 +77,7 @@ Gitalytics; an instant insights into repository health, community engagement, an
 
 6. Open [http://localhost:8080](http://localhost:8080) in your browser
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend Framework**: React with TypeScript
 - **Styling**: Tailwind CSS + shadcn/ui
@@ -86,7 +86,7 @@ Gitalytics; an instant insights into repository health, community engagement, an
 - **Build Tool**: Vite
 - **API**: GitHub REST API
 
-## 📖 Usage
+## Usage
 
 1. Enter a GitHub repository name in the format `owner/repository` (e.g., `facebook/react`)
 2. View instant analytics including:
@@ -111,7 +111,7 @@ Contributions are welcome! Here's how you can help:
 4. Push to the branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
-## 📝 Documentation
+## Documentation
 
 Key components and their purposes:
 
@@ -121,14 +121,14 @@ Key components and their purposes:
 - `Chart.tsx`: Reusable chart components
 - `MetricCard.tsx`: Analytics metric display cards
 
-## 🔑 API Rate Limits
+## API Rate Limits
 
 - Without authentication: 60 requests/hour
 - With authentication: 5,000 requests/hour
 - Use a GitHub token to increase your rate limit
 
 
-## 🚀 Performance Features
+## Performance Features
 
 ### Caching System
 
@@ -145,7 +145,7 @@ Key components and their purposes:
 - **Rate Limit Handling**: Smart backoff strategy
 
 
-## 🌟 Features Coming Soon
+## Features Coming Soon
 
 - [ ] Repository comparison
 - [ ] Contributor insights
@@ -154,17 +154,17 @@ Key components and their purposes:
 - [ ] PDF report export
 - [ ] Team collaboration
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [GitHub REST API](https://docs.github.com/rest) for providing the data
 - [shadcn/ui](https://ui.shadcn.com/) for beautiful UI components
 - [Recharts](https://recharts.org/) for the charting library
 
-## 📧 Contact
+## Contact
 
 Shravan - [@shravan20](https://github.com/shravan20)
 
